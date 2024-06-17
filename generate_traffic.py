@@ -7,6 +7,7 @@ import requests
 import dns.message
 import dns.query
 import string
+import socket
 
 
 class TrexTrafficGenerator:
@@ -56,10 +57,12 @@ class TrexTrafficGenerator:
         """
         while not self.stop_event.is_set():
             if self.protocol == 'TCP':
-                print(f"Sending TCP packet to {self.destination}:{
+                self.send_tcp_packet()
+                print(f"Sent TCP packet to {self.destination}:{
                       self.port}, size: {self.packet_size} bytes")
             elif self.protocol == 'UDP':
-                print(f"Sending UDP packet to {self.destination}:{
+                self.send_udp_packet()
+                print(f"Sent UDP packet to {self.destination}:{
                       self.port}, size: {self.packet_size} bytes")
             elif self.protocol == 'HTTP':
                 print(f"Sending HTTP request to {
@@ -73,6 +76,25 @@ class TrexTrafficGenerator:
                 return
 
             time.sleep(self.interval)
+
+    def send_tcp_packet(self) -> None:
+        """
+        Отправляет TCP пакет.
+        """
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.connect((self.destination, self.port))
+            packet = ''.join(random.choices(
+                string.ascii_letters + string.digits, k=self.packet_size))
+            s.sendall(packet.encode())
+
+    def send_udp_packet(self) -> None:
+        """
+        Отправляет UDP пакет.
+        """
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+            packet = ''.join(random.choices(
+                string.ascii_letters + string.digits, k=self.packet_size))
+            s.sendto(packet.encode(), (self.destination, self.port))
 
     def send_http_request(self) -> None:
         """
